@@ -2,7 +2,7 @@
 IMPLEMENTATION_PLAN.md — Implementation Plan
 Purpose: ordered, verifiable tasks for the coding agent.
 Rules:
-  - Checkboxes only: [ ] = todo, [x] = done. No task ID prefixes.
+  - Checkboxes only: [ ] todo, [x] done + verified, [~] reframed, [-] skipped. No task ID prefixes.
   - Reference REQ-xxx / US-xxx per task so progress traces back to requirements.
   - SIMPLE work → grouped tasks (one task, several steps).
   - COMPLEX / error-prone work → atomic tasks, each with dependencies + a verify step.
@@ -13,7 +13,9 @@ Delete this comment block after filling.
 # Implementation Plan
 
 ## Legend
-- `[ ]` todo · `[x]` done · `depends on:` blocking tasks · `verify:` command or concrete check
+- `[ ]` todo · `[x]` done + verify passed · `[~]` reframed (approach changed — note why below the task) · `[-]` skipped (note why)
+- `depends on:` blocking tasks · `verify:` command or concrete check
+- `[~]` and `[-]` are reported to the user, never applied silently.
 
 ## Group A — Setup & foundations (grouped)
 - [ ] **Bootstrap project** (scaffolding, lint, CI) — REQ-xxx
@@ -35,4 +37,5 @@ Delete this comment block after filling.
 
 ## Rules for the coding agent
 1. Never mark [x] without a passing verify.
-2. A task change that alters behavior → update affected docs first (see AGENTS.md living-docs law).
+2. `[~]` (reframed) and `[-]` (skipped) need a written reason and a user report — never applied silently.
+3. A task change that alters behavior → update affected docs first (see AGENTS.md living-docs law).

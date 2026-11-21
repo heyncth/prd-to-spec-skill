@@ -71,6 +71,10 @@ Copy the needed templates from `assets/templates/`, fill them, and place them in
 | G2 Spec | `docs/UI_UX_SPEC.md` → `docs/TECH_STACK.md` → `docs/TDD.md` → `docs/DATABASE.md` → `docs/API_SPEC.md` | Gate 1b |
 | G3 Plan & rules | `docs/IMPLEMENTATION_PLAN.md` → `AGENTS.md` | Gate 1c |
 
+Also in G3: if Claude Code is among the user's agents, write a root `CLAUDE.md` containing exactly `@AGENTS.md` — Claude Code does not read `AGENTS.md` directly in every version. One line, nothing else.
+
+Plan checkbox vocabulary: `[ ]` open · `[x]` done + verified · `[~]` reframed (approach changed, reason written under the task) · `[-]` skipped (reason written). `[~]` and `[-]` are always reported to the user, never applied silently.
+
 Conditional files: `docs/DATABASE.md` (skip if no database), `docs/API_SPEC.md` (skip if no API), `docs/TESTING.md` (only if complex logic needs a test plan), `docs/DECISIONS_LOG.md` (only if significant decisions/trade-offs occurred).
 
 **Depth by risk:** write deep detail for auth, data models, and core flows; keep CRUD and simple UI brief. Merge trivial sections instead of creating files.

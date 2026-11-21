@@ -59,7 +59,7 @@ Conditional files are skipped when they don't apply — never created empty.
 **Claude Code**
 
 ```bash
-npx skills add <owner>/prd-to-spec-skill -a claude-code
+npx skills add heyncth/prd-to-spec-skill -a claude-code
 # or manually
 cp -r prd-to-spec-skill .claude/skills/   # project
 cp -r prd-to-spec-skill ~/.claude/skills/ # global
@@ -77,7 +77,7 @@ cp -r prd-to-spec-skill ~/.agents/skills/ # global
 **Any agent via skills CLI**
 
 ```bash
-npx skills add <owner>/prd-to-spec-skill -a claude-code -a codex -a cursor
+npx skills add heyncth/prd-to-spec-skill -a claude-code -a codex -a cursor
 ```
 
 ## Use
@@ -93,6 +93,15 @@ Validation anytime:
 ```bash
 python assets/scripts/validate_ids.py <project-root>          # full check
 python assets/scripts/validate_ids.py --impact REQ-001 .      # what does this change affect?
+```
+
+## Example output
+
+[`examples/sample-output/`](examples/sample-output/) — a complete run for a small link shortener (Shrinkr): PRD → stories → flows → tech stack → TDD → DB → API → plan → `AGENTS.md` + `CLAUDE.md`. Validates clean and the `--impact` graph resolves `REQ-001 → US-001 → API-001 → TBL-001`.
+
+```bash
+python assets/scripts/validate_ids.py examples/sample-output
+python assets/scripts/validate_ids.py --impact REQ-001 examples/sample-output
 ```
 
 ## Positioning (for the curious)

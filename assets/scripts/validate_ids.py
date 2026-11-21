@@ -66,8 +66,10 @@ def impact(root: Path, target: str) -> int:
 
     def blocks(text: str, prefix: str) -> dict:
         out = {}
+        # cut at next id heading OR any level-2 section (e.g. an index table
+        # after the entries must not join the last block)
         for m in re.finditer(
-            rf"^#{{1,6}}\s*({prefix}-\d{{3}})\b.*?(?=^#{{1,6}}\s*{prefix}-\d{{3}}\b|\Z)",
+            rf"^#{{1,6}}\s*({prefix}-\d{{3}})\b.*?(?=^#{{1,6}}\s*{prefix}-\d{{3}}\b|^##\s|\Z)",
             text, re.M | re.S,
         ):
             out[m.group(1)] = m.group(0)
@@ -79,23 +81,33 @@ def impact(root: Path, target: str) -> int:
     changed = True
     while changed:
         changed = False
-        # US referencing affected REQ; API referencing affected REQ/US
-        ref = re.compile(r"\b(?:" + "|".join(map(re.escape, affected)) + r")\b")
-        for uid, blk in us_blocks.items():
-            if uid not in affected and ref.search(blk):
-                affected.add(uid)
-                changed = True
-        for aid, blk in api_blocks.items():
-            if aid not in affected and ref.search(blk):
-                affected.add(aid)
-                changed = True
-        # TBL reachable only from affected APIs
-        for aid in list(affected):
-            if aid.startswith("API-") and aid in api_blocks:
+        req_seeds = [a for a in affected if a.startswith("REQ-")]
+        us_seeds = [a for a in affected if a.startswith("US-")]
+        # forward edges only: REQ -> US, REQ/US -> API, API -> TBL
+        if req_seeds:
+            req_pat = re.compile(r"\b(?:" + "|".join(map(re.escape, req_seeds)) + r")\b")
+            for uid, blk in us_blocks.items():
+                if uid not in affected and req_pat.search(blk):
+                    affected.add(uid)
+                    changed = True
+        seeds = req_seeds + us_seeds
+        if seeds:
+            seed_pat = re.compile(r"\b(?:" + "|".join(map(re.escape, seeds)) + r")\b")
+            for aid, blk in api_blocks.items():
+                if aid not in affected and seed_pat.search(blk):
+                    affected.add(aid)
+                    changed = True
+        for aid in [a for a in affected if a.startswith("API-")]:
+            if aid in api_blocks:
                 for t in re.findall(r"\bTBL-\d{3}\b", api_blocks[aid]):
                     if t not in affected:
                         affected.add(t)
                         changed = True
+    # schema change: a TBL target also hits the endpoints touching it
+    if target.startswith("TBL-"):
+        for aid, blk in api_blocks.items():
+            if re.search(rf"\b{re.escape(target)}\b", blk):
+                affected.add(aid)
 
     print(f"Impact of {target}:")
     for aid in sorted(affected):
@@ -155,8 +167,8 @@ def main() -> int:
     # 2. US must reference >= 1 REQ
     us_text = docs.get("USER_STORIES", "")
     for us in [i for i in defined if i.startswith("US-")]:
-        # scope to the US block: from its heading to the next US heading or EOF
-        m = re.search(rf"^#{{1,6}}\s*{us}\b.*?(?=^#{{1,6}}\s*US-\d{{3}}\b|\Z)",
+        # scope to the US block: next US heading, any h2 section, or EOF
+        m = re.search(rf"^#{{1,6}}\s*{us}\b.*?(?=^#{{1,6}}\s*US-\d{{3}}\b|^##\s|\Z)",
                       us_text, re.M | re.S)
         block = m.group(0) if m else us_text
         if not re.search(r"\bREQ-\d{3}\b", block):
@@ -165,7 +177,7 @@ def main() -> int:
     # 3. API must reference >= 1 REQ or US
     api_text = docs.get("API_SPEC", "")
     for api in [i for i in defined if i.startswith("API-")]:
-        m = re.search(rf"^#{{1,6}}\s*{api}\b.*?(?=^#{{1,6}}\s*API-\d{{3}}\b|\Z)",
+        m = re.search(rf"^#{{1,6}}\s*{api}\b.*?(?=^#{{1,6}}\s*API-\d{{3}}\b|^##\s|\Z)",
                       api_text, re.M | re.S)
         block = m.group(0) if m else api_text
         if not re.search(r"\b(REQ|US)-\d{3}\b", block):
